@@ -40,9 +40,9 @@ public class Parser {
 
     private Stmt varDeclaration() {
         Token name = consume(IDENTIFIER, "Expect variable name.");
-        
+
         Expr initializer = null;
-        if(match(EQUAL)) {
+        if (match(EQUAL)) {
             initializer = expression();
         }
 
@@ -55,15 +55,33 @@ public class Parser {
     }
 
     private Stmt statement() {
+        if (match(IF)) {
+            return ifStatement();
+        }
+
         if (match(PRINT)) {
             return printStatement();
         }
 
-        if(match(LEFT_BRACE)) {
+        if (match(LEFT_BRACE)) {
             return new Stmt.Block(block());
         }
 
         return expressionStatement();
+    }
+
+    private Stmt ifStatement() {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
     private Stmt printStatement() {
@@ -92,12 +110,12 @@ public class Parser {
     private Expr assignment() {
         Expr expr = equality();
 
-        if(match(EQUAL)) {
+        if (match(EQUAL)) {
             Token equals = previous();
             Expr value = assignment();
 
-            if(expr instanceof Expr.Variable) {
-                Token name = ((Expr.Variable)expr).name;
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable) expr).name;
                 return new Expr.Assign(name, value);
             }
 
@@ -106,8 +124,6 @@ public class Parser {
 
         return expr;
     }
-
-
 
     private Expr equality() {
         Expr expr = comparison();
